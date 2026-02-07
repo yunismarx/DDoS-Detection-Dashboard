@@ -1,0 +1,24 @@
+Count: 23
+Source Port
+Destination Port
+Flow Duration
+Total Fwd Packets
+Total Length of Fwd Packets
+Fwd Packet Length Max
+Fwd Packet Length Mean
+Bwd Packet Length Max
+Flow IAT Mean
+Flow IAT Std
+Fwd IAT Mean
+Fwd IAT Min
+Bwd IAT Total
+Bwd IAT Mean
+Bwd Packets/s
+Packet Length Mean
+Packet Length Variance
+URG Flag Count
+Down/Up Ratio
+Init_Win_bytes_forward
+Init_Win_bytes_backward
+act_data_pkt_fwd
+Idle Min

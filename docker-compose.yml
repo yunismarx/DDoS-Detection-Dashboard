@@ -1,0 +1,145 @@
+
+
+services:
+  # Zookeeper for Kafka
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: ids-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+    #   - "9092:9092"
+    #   - "9093:9093"
+        - "2181:2181"
+    networks:
+      - ids-network
+    healthcheck:
+      test: ["CMD", "echo", "ruok", "|", "nc", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Kafka broker
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: ids-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9093,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - ids-network
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Detection Service
+  detector-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ids-detector-service
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount model directory
+      - ./models:/app/models:ro
+      # Mount for model files in current directory
+      - ./models:/app/models:ro
+      # Logs
+      - ./logs:/app/logs
+    environment:
+      - MODEL_DIR=/app/models
+      - SERVICE_PORT=8000
+      - SERVICE_HOST=0.0.0.0
+    networks:
+      - ids-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # Kafka Consumer (HTTP mode)
+  kafka-consumer-http:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ids-kafka-consumer-http
+    depends_on:
+      - kafka
+      - detector-service
+    command: >
+      python kafka_components/kafka_consumer.py
+      --mode http
+      --bootstrap-servers kafka:9093
+      --topic ids.features
+      --detection-url http://detector-service:8000/detect
+    networks:
+      - ids-network
+    restart: unless-stopped
+    # deploy:
+    #   replicas: 2  # Run multiple consumers for scalability
+
+  # Kafka Consumer (Local mode - higher performance)
+  kafka-consumer-local:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ids-kafka-consumer-local
+    depends_on:
+      - kafka
+    volumes:
+      - ./models:/app/models:ro
+    command: >
+      python kafka_components/kafka_consumer.py
+      --mode local
+      --bootstrap-servers kafka:9093
+      --topic ids.features
+      --model-dir /app
+    networks:
+      - ids-network
+    restart: unless-stopped
+    # deploy:
+    #   replicas: 3
+
+  # Dashboard (Streamlit)
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ids-dashboard
+    depends_on:
+      - detector-service
+    ports:
+      - "8501:8501"
+    command: >
+      streamlit run dashboard/streamlit/dashboard.py
+      --server.port=8501
+      --server.address=0.0.0.0
+    environment:
+      - DETECTOR_SERVICE_URL=http://detector-service:8000
+    networks:
+      - ids-network
+    restart: unless-stopped
+
+networks:
+  ids-network:
+    driver: bridge
+
+volumes:
+  kafka-data:
+  zookeeper-data:
