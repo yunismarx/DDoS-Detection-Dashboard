@@ -1,0 +1,88 @@
+{
+  "dedup_window": 60,
+  "max_alerts_per_window": 5,
+  "min_confidence": 0.6,
+  "min_vote_count": null,
+  "_comment_min_vote_count": "Minimum votes to trigger alert (null = use detection threshold, 3 = require 3+ votes)",
+  "telegram": {
+    "enabled": true,
+    "bot_token": "",
+    "chat_ids": [
+      ""
+    ],
+    "comment": "Get bot token from @BotFather, get chat_id from @userinfobot"
+  },
+  "email": {
+    "enabled": false,
+    "smtp_server": "smtp.gmail.com",
+    "smtp_port": 587,
+    "username": "your-email@gmail.com",
+    "password": "your-app-password",
+    "from_addr": "alerts@yourdomain.com",
+    "to_addrs": [
+      "admin@yourdomain.com",
+      "security@yourdomain.com"
+    ],
+    "comment": "For Gmail, use app-specific password, not your regular password"
+  },
+  "slack": {
+    "enabled": false,
+    "webhook_url": "https://hooks.slack.com/services/YOUR/WEBHOOK/URL",
+    "comment": "Create incoming webhook in Slack app settings"
+  },
+  "webhook": {
+    "enabled": false,
+    "url": "https://your-webhook-endpoint.com/alerts",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer YOUR_API_KEY"
+    },
+    "comment": "Generic HTTP webhook for custom integrations"
+  },
+  "severity_levels": {
+    "critical": {
+      "min_confidence": 0.95,
+      "min_votes": 3,
+      "alert_all_channels": true
+    },
+    "high": {
+      "min_confidence": 0.85,
+      "min_votes": 2,
+      "alert_all_channels": true
+    },
+    "medium": {
+      "min_confidence": 0.70,
+      "min_votes": 2,
+      "alert_all_channels": false
+    },
+    "low": {
+      "min_confidence": 0.50,
+      "min_votes": 1,
+      "alert_all_channels": false
+    }
+  },
+  "rules": {
+    "rapid_fire": {
+      "enabled": true,
+      "description": "Trigger alert when N attacks detected in T seconds",
+      "threshold": 10,
+      "window_seconds": 60,
+      "severity": "critical"
+    },
+    "high_volume_source": {
+      "enabled": true,
+      "description": "Single source generating high attack volume",
+      "packets_threshold": 10000,
+      "bytes_per_sec_threshold": 10000000,
+      "severity": "high"
+    },
+    "suspicious_protocol": {
+      "enabled": true,
+      "description": "Unusual protocol combinations",
+      "protocols": [
+        "ICMP"
+      ],
+      "severity": "medium"
+    }
+  }
+}

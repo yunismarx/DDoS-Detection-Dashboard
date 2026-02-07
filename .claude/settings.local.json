@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker stop:*)",
+      "Bash(python send_benign_to_kafka.py:*)",
+      "Bash(docker logs:*)",
+      "Bash(python send_attack_to_kafka.py:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(python:*)",
+      "Bash(docker restart:*)",
+      "Bash(curl:*)",
+      "Bash(docker-compose restart:*)",
+      "Bash(docker exec:*)",
+      "Bash(docker-compose down:*)",
+      "Bash(docker-compose build:*)",
+      "Bash(docker stats:*)",
+      "Bash(docker run --rm --entrypoint sh df-detector-service -c \"echo MODEL_DIR=$MODEL_DIR\")",
+      "Bash(timeout 3 docker logs:*)",
+      "Bash(docker ps:*)",
+      "Bash(timeout 5 docker logs:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
